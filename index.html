@@ -896,6 +896,115 @@
                 width: 250px;
             }
         }
+
+        /* AI聊天部分样式 */
+        .chat-section {
+            min-height: 80vh;
+            padding: 120px 8% 80px;
+            position: relative;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.4), rgba(15, 15, 24, 0.6));
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 204, 255, 0.15);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        .user-message {
+            align-self: flex-end;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+        }
+
+        .user-message .message-content {
+            background: var(--accent-color);
+            color: var(--dark-bg);
+        }
+
+        .ai-message .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 1px solid rgba(0, 204, 255, 0.2);
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 20px;
+            border-top: 1px solid rgba(0, 204, 255, 0.15);
+            gap: 10px;
+        }
+
+        #chatInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 204, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--white);
+            outline: none;
+            font-size: 14px;
+        }
+
+        #chatInput:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(0, 204, 255, 0.3);
+        }
+
+        #sendButton {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent-color);
+            color: var(--dark-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        #sendButton:hover {
+            background: var(--accent-color-secondary);
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -917,6 +1026,7 @@
             <a href="#home" class="active">首页</a>
             <a href="#skills">经历</a>
             <a href="#works">作品</a>
+            <a href="#ai-chat">AI助手</a>
             <a href="#contact">联系我</a>
         </div>
     </nav>
@@ -1032,6 +1142,26 @@
             </div>
             <div class="carousel-arrow prev"><i class="bi bi-chevron-left"></i></div>
             <div class="carousel-arrow next"><i class="bi bi-chevron-right"></i></div>
+        </div>
+    </section>
+
+    <!-- AI聊天助手部分 - 添加到联系我section之前 -->
+    <section id="ai-chat" class="chat-section">
+        <h2 class="section-title">与我的AI助手对话</h2>
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai-message">
+                    <div class="message-content">
+                        <p>你好！我是王皓辰的AI助手，可以回答关于我的工作经历、技能和项目的问题。有什么想了解的吗？</p>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input-container">
+                <input type="text" id="chatInput" placeholder="输入你的问题..." />
+                <button id="sendButton">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
         </div>
     </section>
 
@@ -1160,6 +1290,75 @@
                     link.classList.add('active');
                 }
             });
+        });
+
+        // AI聊天功能
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            // 添加用户消息到聊天界面
+            addMessage(message, 'user');
+            chatInput.value = '';
+
+            // 显示加载状态
+            const loadingMessage = addMessage('正在思考中...', 'ai', true);
+
+            try {
+                // 调用API
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                // 移除加载消息
+                chatMessages.removeChild(loadingMessage);
+
+                if (data.success) {
+                    addMessage(data.reply, 'ai');
+                } else {
+                    addMessage('抱歉，出现了一些问题，请稍后重试。', 'ai');
+                }
+
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                chatMessages.removeChild(loadingMessage);
+                addMessage('网络连接出现问题，请检查网络后重试。', 'ai');
+            }
+        }
+
+        function addMessage(content, sender, isLoading = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = `<p>${content}</p>`;
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // 滚动到底部
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        // 事件监听
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
         });
     </script>
 </body>
