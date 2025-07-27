@@ -54,6 +54,11 @@ async function callAIModel(userMessage) {
 
 请以友好专业的语气回答用户的问题，如果被问到不了解的具体技术细节，可以诚实地说明。回答要简洁明了，控制在200字以内。`;
 
+  // 测试模式：如果没有API密钥，返回预设回复
+  if (!process.env.OPENAI_API_KEY) {
+    return getTestResponse(userMessage);
+  }
+
   try {
     // 使用OpenAI API示例
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -92,4 +97,41 @@ async function callAIModel(userMessage) {
     
     return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
   }
+}
+
+// 测试模式回复函数
+function getTestResponse(userMessage) {
+  const message = userMessage.toLowerCase();
+  
+  // 根据关键词匹配返回相应回复
+  if (message.includes('你好') || message.includes('hello') || message.includes('hi')) {
+    return '你好！我是王皓辰的AI助手。很高兴认识你！我可以回答关于王皓辰的工作经历、技能、项目经验等问题。有什么想了解的吗？';
+  }
+  
+  if (message.includes('工作') || message.includes('职业') || message.includes('经历')) {
+    return '王皓辰目前是腾讯的AI产品经理，专注于AI大模型应用开发。他有3年的AI产品经验，是国内首批AI产品经理之一。他负责的产品日活用户超过3万，具备优秀的跨部门沟通和项目管理能力。';
+  }
+  
+  if (message.includes('教育') || message.includes('学历') || message.includes('大学')) {
+    return '王皓辰毕业于陕西科技大学产品设计专业（2018-2022年）。陕西科技大学是全国88所重点院校之一，也是陕西省国家"双一流"培育高校。';
+  }
+  
+  if (message.includes('获奖') || message.includes('奖项') || message.includes('成就')) {
+    return '王皓辰获得了多个重要奖项，包括：德国IF设计奖、中国设计智造大奖DIA、台湾两岸新锐设计华灿奖全国二等奖、知识产权杯全国大学生工业设计大赛一等奖、互联网+全国大学生全国二等奖等。这些奖项体现了他在设计和创新方面的卓越能力。';
+  }
+  
+  if (message.includes('技能') || message.includes('能力') || message.includes('专长')) {
+    return '王皓辰的核心技能包括：AI大模型训练、AI产品管理、UI/UX设计、产品设计和市场分析。他具备较强的市场意识和出色的市场调研、需求分析、数据分析能力，是一个结果导向的产品经理。';
+  }
+  
+  if (message.includes('联系') || message.includes('合作') || message.includes('招聘')) {
+    return '如果你想与王皓辰联系或了解合作机会，可以通过页面底部的联系方式与他取得联系。他很乐意与同行交流AI产品相关的话题！';
+  }
+  
+  if (message.includes('ai') || message.includes('人工智能') || message.includes('大模型')) {
+    return '王皓辰在AI领域有丰富经验，特别是在大语言模型类产品方面。他参与过多个AI产品的从0到1开发，对AI技术如何转化为实际的用户价值有深入理解。如果你对AI产品开发感兴趣，可以与他深入交流！';
+  }
+  
+  // 默认回复
+  return '感谢你的提问！我是王皓辰的AI助手，目前正在测试模式下运行。你可以问我关于王皓辰的工作经历、教育背景、获奖情况、技能专长等问题。或者你也可以通过页面底部的联系方式直接与他联系！';
 }
