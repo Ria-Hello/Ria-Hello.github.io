@@ -4,8 +4,7 @@
     "description": "王皓辰的个人网站",
     "main": "index.html",
     "scripts": {
-      "dev": "vercel dev",
-      "build": "vercel build"
+      "dev": "vercel dev"
     },
     "dependencies": {
       "openai": "^4.20.0"
