@@ -17,15 +17,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
     
     // 验证输入
     if (!message || message.trim().length === 0) {
       return res.status(400).json({ error: '请输入有效的消息' });
     }
 
-    // 这里调用大模型API
-    const response = await callAIModel(message);
+    console.log('收到用户消息:', message);
+    console.log('对话历史:', history);
+
+    // 这里调用大模型API，传入历史记录
+    const response = await callAIModel(message, history);
     
     res.status(200).json({ 
       success: true, 
@@ -41,8 +44,10 @@ export default async function handler(req, res) {
 }
 
 // AI模型调用函数 - 这里使用OpenAI作为示例
-async function callAIModel(userMessage) {
-  const systemPrompt = `你是王皓辰的AI助手。王皓辰是一位AI产品经理，在腾讯负责AI大模型应用开发，有3年AI产品经验。
+async function callAIModel(userMessage, history) {
+  const systemPrompt = `
+  
+你是王皓辰的AI助手。王皓辰是一位AI产品经理，在腾讯负责AI大模型应用开发，有3年AI产品经验。
   
 关于王皓辰的基本信息：
 - 职业：AI产品经理 / 腾讯AI大模型应用
@@ -52,10 +57,12 @@ async function callAIModel(userMessage) {
 - 技能：AI大模型训练、AI产品管理、UI/UX设计、产品设计、市场分析
 - 特点：有较强的市场意识，具备出色的市场调研、需求分析、数据分析等能力，结果导向，具备优秀的跨部门沟通能力、团队合作能力、项目管理能力及优秀的学习能力
 
-请以友好专业的语气回答用户的问题，如果被问到不了解的具体技术细节，可以诚实地说明。回答要简洁明了，控制在200字以内。`;
+请以友好专业的语气回答用户的问题，如果被问到不了解的具体技术细节，可以诚实地说明。回答要简洁明了，控制在200字以内。
+每次用户输入提的问题会附带之前你们的前三轮对话，如果用户的问题涉及之前的对话内容，从这三轮对话中找答案，如果给你的信息中有三轮对话，但是找不到用户想问的内容，可以直接告诉用户你只有前三轮的对话记录，并表示不好意思。
+`;
 
   // 优先检查：如果匹配预设关键词，直接返回不调用大模型
-  const quickResponse = getQuickResponse(userMessage);
+  const quickResponse = getQuickResponse(userMessage, history);
   if (quickResponse) {
     console.log('匹配到预设关键词，直接返回快速回复');
     return quickResponse;
@@ -69,6 +76,22 @@ async function callAIModel(userMessage) {
 
   try {
     console.log('调用大模型API获取智能回复');
+    
+    // 构建messages数组：系统提示词 + 历史对话 + 当前问题
+    const messages = [
+      { role: 'system', content: systemPrompt }
+    ];
+    
+    // 添加历史对话
+    if (history && history.length > 0) {
+      messages.push(...history);
+    }
+    
+    // 添加当前用户问题
+    messages.push({ role: 'user', content: userMessage });
+    
+    console.log('发送给模型的完整对话:', messages);
+
     // 使用OpenAI API示例
     const openaiResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -78,10 +101,7 @@ async function callAIModel(userMessage) {
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
+        messages: messages,
         max_tokens: 300,
         temperature: 0.7
       })
@@ -109,7 +129,7 @@ async function callAIModel(userMessage) {
 }
 
 // 快速回复函数 - 检查是否匹配预设关键词
-function getQuickResponse(userMessage) {
+function getQuickResponse(userMessage, history) {
   const message = userMessage.toLowerCase().trim();
   
   // 精确匹配常见问候和问题

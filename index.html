@@ -1297,6 +1297,44 @@
         const chatInput = document.getElementById('chatInput');
         const sendButton = document.getElementById('sendButton');
 
+        // 对话历史缓存 - 最多保存3轮对话
+        let conversationHistory = [];
+        const MAX_HISTORY_ROUNDS = 3;
+
+        // 添加对话到历史记录
+        function addToHistory(userMessage, aiReply) {
+            // 添加新的对话轮次
+            conversationHistory.push({
+                user: userMessage,
+                assistant: aiReply
+            });
+
+            // 如果超过最大轮次，移除最早的对话
+            if (conversationHistory.length > MAX_HISTORY_ROUNDS) {
+                conversationHistory.shift();
+            }
+
+            console.log('当前对话历史:', conversationHistory);
+        }
+
+        // 清除对话历史
+        function clearHistory() {
+            conversationHistory = [];
+            console.log('对话历史已清除');
+        }
+
+        // 格式化历史记录为API请求格式
+        function formatHistoryForAPI() {
+            const historyMessages = [];
+            
+            conversationHistory.forEach(round => {
+                historyMessages.push({ role: 'user', content: round.user });
+                historyMessages.push({ role: 'assistant', content: round.assistant });
+            });
+            
+            return historyMessages;
+        }
+
         async function sendMessage() {
             const message = chatInput.value.trim();
             if (!message) return;
@@ -1309,13 +1347,19 @@
             const loadingMessage = addMessage('正在思考中...', 'ai', true);
 
             try {
+                // 准备API请求数据，包含历史记录
+                const requestData = {
+                    message: message,
+                    history: formatHistoryForAPI()
+                };
+
                 // 调用API
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify(requestData)
                 });
 
                 const data = await response.json();
@@ -1324,7 +1368,11 @@
                 chatMessages.removeChild(loadingMessage);
 
                 if (data.success) {
-                    addMessage(data.reply, 'ai');
+                    const aiReply = data.reply;
+                    addMessage(aiReply, 'ai');
+                    
+                    // 将本轮对话添加到历史记录
+                    addToHistory(message, aiReply);
                 } else {
                     addMessage('抱歉，出现了一些问题，请稍后重试。', 'ai');
                 }
