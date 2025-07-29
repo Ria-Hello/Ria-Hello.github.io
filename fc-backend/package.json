@@ -1,0 +1,28 @@
+{
+  "name": "personal-website-backend",
+  "version": "1.0.0",
+  "description": "个人网站后端 - 阿里云函数计算",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "local": "node local-test.js"
+  },
+  "keywords": [
+    "aliyun",
+    "function-compute",
+    "serverless",
+    "contact-form"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@alicloud/pop-core": "^1.7.10",
+    "tablestore": "^5.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+} 
